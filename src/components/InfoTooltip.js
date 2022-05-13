@@ -1,10 +1,11 @@
 import { memo } from 'react';
 
 function InfoTooltip(props) {
-  const { isOpen, onClose, isRegistered } = props;
-  const statusIcon = isRegistered ? 'popup__status-icon_type_success' : 'popup__status-icon_type_error';
-  const statusText = isRegistered ? 'Вы успешно зарегистрировались!' : 'Что-то пошло не так! Попробуйте ещё раз.'
+  const { isOpen, onClose, isRequestCompleted } = props;
 
+  // Отображение статуса запроса
+  const statusIcon = isRequestCompleted ? 'popup__status-icon_type_success' : 'popup__status-icon_type_error';
+  const statusText = isRequestCompleted ? 'Вы успешно зарегистрировались!' : 'Что-то пошло не так! Попробуйте ещё раз.'
 
   return (
     <div className={`popup ${isOpen ? 'popup_opened' : ''}`}>

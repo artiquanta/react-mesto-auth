@@ -1,19 +1,24 @@
 import { memo, useState, useContext } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, Switch, Route } from 'react-router-dom';
 import { AppContext } from '../contexts/AppContext';
 
 function Header(props) {
   const { onSignOut } = props;
   const { loggedIn, userEmail } = useContext(AppContext);
-  const currentPath = useLocation();
 
   // Состояние для мобильного меню
   const [isMenuOpen, setMenuOpen] = useState(false);
 
   // Добавление ссылок, если пользователь неавторизован
-  const headerLink = (currentPath.pathname === '/sign-in') ?
-    <Link to="./sign-up" className="header__link">Регистрация</Link>
-    : <Link to="./sign-in" className="header__link">Войти</Link>;
+  const headerLink =
+    <Switch>
+      <Route path="/sign-in">
+        <Link to="./sign-up" className="header__link">Регистрация</Link>
+      </Route>
+      <Route path="/sign-up">
+        <Link to="./sign-in" className="header__link">Войти</Link>
+      </Route>
+    </Switch>;
 
   // Добавление блока с информацией и кнопкой выхода после авторизации
   const headerBlock =

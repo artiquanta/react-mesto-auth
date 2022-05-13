@@ -1,22 +1,11 @@
-import { memo, useContext, useState } from 'react';
+import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import InfoTooltip from './InfoTooltip';
-import * as auth from '../utils/auth';
-import { AppContext } from '../contexts/AppContext';
 
 function Register(props) {
-  const { onLogin } = props;
-  const { history, showError } = useContext(AppContext)
+  const { onRegister } = props;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isTooltipOpen, setTooltipOpen] = useState(false);
-  const [isRegistered, setRegistered] = useState(false);
-
-  // Закрытие модального окна уведомления о статусе регистрации
-  function closePopup() {
-    setTooltipOpen(false);
-  }
 
   // Обработчик полей ввода
   function handleChange(evt) {
@@ -39,33 +28,11 @@ function Register(props) {
     if (!email || !password) {
       return;
     }
-    auth.register(email, password) // регистрируем пользователя
-      .then(res => {
-        if (res.statusCode !== '400') {
-          setRegistered(true);
-          setTooltipOpen(true);
-          auth.authorize(email, password) // авторизуем пользователя после успешной регистрации
-            .then(res => {
-              if (res.token) {
-                setEmail('');
-                setPassword('');
-                onLogin(email);
-                history.push('/');
-              }
-            })
-            .catch(err => showError(err));
-        }
-      })
-      .catch(() => {
-        setRegistered(false);
-        setTooltipOpen(true);
-      });
+    onRegister(email, password);
   }
-
 
   return (
     <div className="content">
-      <InfoTooltip isOpen={isTooltipOpen} onClose={closePopup} isRegistered={isRegistered} />
       <div className="authorization">
         <form className="popup__inputs popup__inputs_place_authorization" noValidate onSubmit={handleSubmit}>
           <h2 className="popup__heading popup__heading_place_authorization">Регистрация</h2>

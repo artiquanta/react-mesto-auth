@@ -15,9 +15,9 @@ import Loader from './Loader';
 import ProtectedRoute from './ProtectedRoute';
 import Login from './Login';
 import Register from './Register';
+import InfoTooltip from './InfoTooltip';
 import { CurrentUserContext } from '../contexts/CurrentUserContext';
 import { AppContext } from '../contexts/AppContext';
-
 
 function App() {
   const [loggedIn, setLoggedIn] = useState(false);
@@ -33,6 +33,8 @@ function App() {
   const [isProcessing, setProcessStatus] = useState(false);
   const [isLoading, setLoadingStatus] = useState(true);
   const [errorData, setErrorData] = useState({});
+  const [isTooltipOpen, setTooltipOpen] = useState(false);
+  const [isRequestCompleted, setRequestCompleted] = useState(false);
 
   const history = useHistory();
 
@@ -61,10 +63,56 @@ function App() {
     }
   }, [loggedIn]);
 
+  // Регистрация пользователя
+  function handleRegister(email, password) {
+    auth.register(email, password) // регистрируем пользователя
+      .then(res => {
+        if (res.statusCode !== '400') {
+          setRequestCompleted(true);
+          setTooltipOpen(true);
+          setTimeout(() => {// задержка (без неё запрос не выполняется с кодом 429)
+            setTooltipOpen(false);
+            handleLogin(email, password); // авторизуем пользователя после регистрации
+          }, 3000);
+
+        }
+      })
+      .catch(() => {
+        // отображаем ошибку регистрации
+        setRequestCompleted(false);
+        setTooltipOpen(true);
+      });
+  }
+
+  // Обработчик входа в систему
+  function handleLogin(email, password) {
+    auth.authorize(email, password)
+      .then(res => {
+        if (res.token) {
+          setLoggedIn(true);
+          setUserEmail(email);
+          history.push('/');
+        }
+      })
+      .catch(() => {
+        // отображаем ошибку авторизации
+        setRequestCompleted(false);
+        setTooltipOpen(true);
+      });
+  }
+
+  // Обработчик выхода из системы
+  function handleSignOut() {
+    localStorage.removeItem('jwt');
+    setLoggedIn(false);
+    history.push('/sign-in');
+  }
+
   // Проверка наличия и корректности токена пользователя
   function handleTokenCheck() {
-    if (localStorage.getItem('jwt')) {
-      const jwt = localStorage.getItem('jwt');
+    const jwt = localStorage.getItem('jwt');
+    if (jwt) {
+      // авторизуем пользователя
       auth.checkToken(jwt)
         .then(data => {
           if (data.email) {
@@ -74,7 +122,7 @@ function App() {
             setLoadingStatus(false);
           }
         })
-        .catch(() => setLoadingStatus(false))
+        .catch(() => setLoadingStatus(false));
     } else {
       setLoadingStatus(false);
     }
@@ -130,6 +178,7 @@ function App() {
     setPopupAvatarOpen(false);
     setPopupProfileOpen(false);
     setPopupConfirmationOpen(false);
+    setTooltipOpen(false);
     setSelectedCard({});
     setCardDeleteId('');
   }
@@ -183,30 +232,17 @@ function App() {
     }, 7000);
   }
 
-  // Обработчик входа в систему
-  function handleLogin(email) {
-    setLoggedIn(true);
-    setUserEmail(email);
-  }
-
-  // Обработчик выхода из системы
-  function handleSignOut() {
-    localStorage.removeItem('jwt');
-    setLoggedIn(false);
-    history.push('/sign-in');
-  }
-
   return (
     <div className="page">
       <CurrentUserContext.Provider value={currentUser}>
-        <AppContext.Provider value={{ loggedIn: loggedIn, history: history, userEmail: userEmail, showError }}>
+        <AppContext.Provider value={{ loggedIn: loggedIn, userEmail: userEmail }}>
           <Header onSignOut={handleSignOut} />
           <Switch>
             <Route path="/sign-in">
               <Login onLogin={handleLogin} />
             </Route>
             <Route path="/sign-up">
-              <Register onLogin={handleLogin} />
+              <Register onLogin={handleLogin} onRegister={handleRegister} />
             </Route>
             <ProtectedRoute>
               <Main
@@ -218,37 +254,40 @@ function App() {
                 onCardLike={handleCardLike}
                 onCardDelete={handleCardDeleteClick} />
               <Footer />
-              <EditProfilePopup
-                isOpen={isEditProfilePopupOpen}
-                onClose={closeAllPopups}
-                onUpdateUser={handleUpdateUser}
-                isProcessing={isProcessing} />
-              <EditAvatarPopup
-                isOpen={isEditAvatarPopupOpen}
-                onClose={closeAllPopups}
-                onUpdateAvatar={handleUpdateAvatar}
-                isProcessing={isProcessing} />
-              <AddPlacePopup
-                isOpen={isAddPlacePopupOpen}
-                onClose={closeAllPopups}
-                onAddPlace={handleAddPlaceSubmit}
-                isProcessing={isProcessing} />
-              <ImagePopup
-                card={selectedCard}
-                onClose={closeAllPopups} />
-              <PopupWithConfirmation
-                isOpen={isPopupWithConfirmationOpen}
-                onClose={closeAllPopups}
-                onCardDelete={handleCardDelete}
-                isProcessing={isProcessing}
-              />
-              <PopupError
-                errorData={errorData} />
             </ProtectedRoute>
             <Route>
               <Redirect to={`${loggedIn ? '/' : '/sign-in'}`} />
             </Route>
           </Switch>
+          <EditProfilePopup
+            isOpen={isEditProfilePopupOpen}
+            onClose={closeAllPopups}
+            onUpdateUser={handleUpdateUser}
+            isProcessing={isProcessing} />
+          <EditAvatarPopup
+            isOpen={isEditAvatarPopupOpen}
+            onClose={closeAllPopups}
+            onUpdateAvatar={handleUpdateAvatar}
+            isProcessing={isProcessing} />
+          <AddPlacePopup
+            isOpen={isAddPlacePopupOpen}
+            onClose={closeAllPopups}
+            onAddPlace={handleAddPlaceSubmit}
+            isProcessing={isProcessing} />
+          <ImagePopup
+            card={selectedCard}
+            onClose={closeAllPopups} />
+          <PopupWithConfirmation
+            isOpen={isPopupWithConfirmationOpen}
+            onClose={closeAllPopups}
+            onCardDelete={handleCardDelete}
+            isProcessing={isProcessing} />
+          <PopupError
+            errorData={errorData} />
+          <InfoTooltip
+            isOpen={isTooltipOpen}
+            onClose={closeAllPopups}
+            isRequestCompleted={isRequestCompleted} />
         </AppContext.Provider>
         <Loader
           isLoading={isLoading} />

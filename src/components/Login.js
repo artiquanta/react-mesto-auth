@@ -1,10 +1,7 @@
-import { memo, useContext, useState } from 'react';
-import * as auth from '../utils/auth';
-import { AppContext } from '../contexts/AppContext';
+import { memo, useState } from 'react';
 
 function Login(props) {
   const { onLogin } = props;
-  const { history, showError } = useContext(AppContext);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,16 +27,7 @@ function Login(props) {
     if (!email || !password) {
       return;
     }
-    auth.authorize(email, password)
-      .then(res => {
-        if (res.token) {
-          setEmail('');
-          setPassword('');
-          onLogin(email);
-          history.push('/');
-        }
-      })
-      .catch(err => showError(err));
+    onLogin(email, password);
   }
 
   return (

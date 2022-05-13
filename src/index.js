@@ -6,12 +6,12 @@ import App from './components/App';
 import reportWebVitals from './reportWebVitals';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
+
+// Отключён StrictMode для режима разработчика из-за проблем с совместимостью React 18 и React-Router v5
 root.render(
-        <React.StrictMode>
-                <BrowserRouter>
-                        <App />
-                </BrowserRouter>
-        </React.StrictMode>
+        <BrowserRouter>
+                <App />
+        </BrowserRouter>
 );
 
 // If you want to start measuring performance in your app, pass a function
